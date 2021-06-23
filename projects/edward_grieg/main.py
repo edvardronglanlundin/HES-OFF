@@ -46,7 +46,7 @@ with hes_off_core.Timer():
 with hes_off_core.Timer():
     EdwardGrieg.evaluate_process_model()
 
-print("hello world")
+
 
 # print("Lifetime CO2 emissions {:0.2f} Mton".format(EdwardGrieg.CO2_emissions / 1e9))
 print(EdwardGrieg.CO2_emissions/1e9)
