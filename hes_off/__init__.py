@@ -8,4 +8,4 @@ def launch_app(host="127.0.0.1", port=5000, debug=False):
     webbrowser.open("http://127.0.0.1:5000/")
     app.hes_off_app.run(host=host, port=port, debug=debug)
 
-launch_app()
+#launch_app()

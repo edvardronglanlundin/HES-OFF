@@ -179,7 +179,7 @@ class HesOffForm(flask_wtf.FlaskForm):
         render_kw={"data-bs-toggle": "tooltip",
                    "data-bs-placement": "right",
                    "title": "Specify the name of the file containing the wind speed data"},
-        choices=[("", ""), ("SLEIPNERWIND", "Sleipner wind")],
+        choices=[("", ""), ("SLEIPNERWIND", "Sleipner wind"), ("ALTAWIND", "Alta wind")],
         validators=[wtf.validators.InputRequired()])
 
     # Electrolyzer specifications

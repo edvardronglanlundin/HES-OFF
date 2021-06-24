@@ -3,6 +3,7 @@ import numpy as np
 import numba as nb
 from scipy.io import loadmat
 from importlib_resources import files
+import pandas as pd
 
 # Compile time constants
 hydrogen_LHV = 119.96e6
@@ -261,23 +262,26 @@ def compute_WT_capacity_factor(model, rated_power, hub_height, ref_height, wind_
 def read_wind_data(filename):
 
     # Load wind data file
-    if filename == "SLEIPNERWIND":
+    if filename == "ALTAWIND":
+        mat_data = loadmat(files('hes_off.core.data_files').joinpath("Alta_wind2.mat"))
+    elif filename == "SLEIPNERWIND":
         mat_data = loadmat(files('hes_off.core.data_files').joinpath("sleipnerwind.mat"))
     else:
-        mat_data = loadmat(filename)
-
+        mat_data = loadmat
     # Store wind data into a dictionary
     wind_data = {"speed": mat_data["wind"][0][0][0].squeeze(),
                  "time":  mat_data["wind"][0][0][1].squeeze(),
                  "year":  mat_data["wind"][0][0][2].squeeze()}
 
-    # Convert from days to hours
-    wind_data["time"] = (wind_data["time"] - wind_data["time"][0]) * 24
+    if filename != "ALTAWIND":
+        # Convert from days to hours
+        wind_data["time"] = (wind_data["time"] - wind_data["time"][0]) * 24
 
-    # Convert from minute-based to hourly data
-    N = 60
-    wind_data["time"] = wind_data["time"][0:-1:N]
-    wind_data["speed"] = np.asarray([np.mean(wind_data["speed"][i:i + N]) for i in range(0, len(wind_data["speed"]), N)])
+        # Convert from minute-based to hourly data
+        N = 60
+        wind_data["time"] = wind_data["time"][0:-1:N]
+        wind_data["speed"] = np.asarray([np.mean(wind_data["speed"][i:i + N]) for i in range(0, len(wind_data["speed"]), N)])
+
     return wind_data
 
 
