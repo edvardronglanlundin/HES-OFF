@@ -5,6 +5,8 @@ from importlib_resources import files
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 from matplotlib.figure import  Figure
+import matplotlib.dates as mdates
+import datetime as datetime
 
 from .utilities import *
 from .process_model import *
@@ -147,7 +149,7 @@ class IntegratedModel:
     def evaluate_process_model(self):
 
         # Evaluate the process model
-        self.process_output = evaluate_process_model(self.HEAT_DEMAND, self.POWER_DEMAND,
+        self.process_output, self.WT_power_available = evaluate_process_model(self.HEAT_DEMAND, self.POWER_DEMAND,
                                                      self.GT_MODEL, self.GT_UNITS, self.GT_MAX_H2,
                                                      self.WT_MODEL, self.WT_RATED_POWER,
                                                      self.WT_REF_HEIGHT, self.WT_HUB_HEIGHT,
@@ -157,7 +159,6 @@ class IntegratedModel:
                                                      self.H2_RECHARGE_THRESHOLD, self.H2_COFIRE_THRESHOLD,
                                                      self.WIND_SPEED, self.WIND_TIME,
                                                      natural_gas, hydrogen)
-
 
 
         # output_dict = {"CO2_emissions":}
@@ -427,5 +428,50 @@ class IntegratedModel:
         fig.tight_layout()
 
         return fig
+
+
+    def print_wt_power_avaliable(self):
+        """Plots and prints wind power statistics"""
+
+        # Makes array with datetime objects for plotting
+        start = datetime.datetime(year=int(self.WIND_DATA["year"]),month=1,day=1,hour=0,minute=0,second=0 )
+        end = datetime.datetime(year=int(self.WIND_DATA["year"])+1, month=1, day=1,hour=0, minute=0, second=0)
+        delta = datetime.timedelta(hours=1)
+        datetimes = mdates.drange(start,end, delta)
+
+        # Plots generated power from wind turbines for a year
+        fig, ax = plt.subplots(figsize=(15,10))
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m.%Y'))
+        [label.set_visible(False) for label in ax.get_xticklabels()[1::2]]
+        ax.set_xlabel("Date (dd.mm.yyyy)", fontsize= 14)
+        ax.set_ylabel("Power (MW)", fontsize = 14)
+        ax.set_title(self.WIND_FILENAME, fontsize = 18, fontweight="bold")
+        ax.plot(datetimes[::70], self.WT_power_available[::70]/10**6, marker = 'o')
+
+        # Calculates statistics for wind power
+        sum_power = 0
+        sum_speed = 0
+        sum_downtime = 0
+        sum_max = 0
+        for power in self.WT_power_available:
+            sum_power += power
+            if power == 0:
+                sum_downtime += 1
+            if power == self.WT_RATED_POWER:
+                sum_max += 1
+        for speed in self.WIND_SPEED:
+            sum_speed += speed
+
+        # Prints statistiscs for wind power
+        print("\nAverage Wind Power    - ", (sum_power/len(self.WT_power_available))/10**6)
+        print("Average Wind Speed      - ", sum_speed/len(self.WIND_SPEED))
+        print("Downtime                - ", sum_downtime/len(self.WT_power_available) * 100)
+        print("Maximum power           - ", sum_max/len(self.WT_power_available)*100)
+        print("Total energy consumtion - ", sum_power/10**6)
+
+
+
+
 
 

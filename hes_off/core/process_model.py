@@ -5,6 +5,7 @@ from scipy.io import loadmat
 from importlib_resources import files
 import pandas as pd
 
+
 # Compile time constants
 hydrogen_LHV = 119.96e6
 MW_CO2 = 44.01/1e3
@@ -31,6 +32,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
 
     # Initialize arrays to store the solution at each instance of the year
     p, n = POWER_DEMAND.size, WIND_SPEED.size
+    print("p= ",p,"n= ",n)
     flag = np.empty((p,n))                   # Type of operational strategy at each time instance
     GT_power = np.empty((p,n))               # Power generated in the gas turbines (W)
     WT_power = np.empty((p,n))               # Power generated in the wind turbines (W)
@@ -44,7 +46,6 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
     NG_utilized = np.empty((p, n))           # Mass flow of natural gas utilized (total) (kg/s)
     CO2_emissions = np.empty((p,n))          # Mass of carbon dioxide emitted to the atmosphere (kg)
     power_deficit = np.empty((p,n))          # Power demand not satisfied (W)
-    # energy_surplus = np.empty((p,n))         # Extra wind energy that is dissipated (J)
 
     # Initialize time array (must have the same shape as the other arrays to return within dictionary)
     times = np.empty((p,n),dtype=np.int32)
@@ -70,7 +71,6 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
 
         # Compute wind power over the year
         WT_power_available = compute_WT_power_output(model=WT_MODEL, hub_height=WT_HUB_HEIGHT, ref_height=WT_REF_HEIGHT, rated_power=WT_RATED_POWER, wind_speed=WIND_SPEED)
-
         for t in times[p]:
 
             # Use a run-out-of-steam strategy to supply the power demand
@@ -128,6 +128,8 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                     FC_power_current = 0.00
                     EL_power_current = 0.00
 
+            # Calculates the energy surplus
+            energy_surplus_current = WT_power_available[t]-WT_power_current
 
             # Determine the type of fuel used in the gas turbines
             use_fuel_blend = H2_level[p,t] > H2_COFIRE_THRESHOLD * H2_CAPACITY
@@ -178,6 +180,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
             CO2_emissions[p, t] = CO2_emissions_current * 3600
 
 
+
     # Store the results in a dictionary
     result_dict = {"flag":           flag*1.00,     # Conversion from integer to float for Numba
                    "times":          times*1.00,    # Conversion from integer to float for Numba
@@ -192,9 +195,10 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                    "H2_utilized":    H2_utilized,
                    "NG_utilized":    NG_utilized,
                    "CO2_emissions":  CO2_emissions,
-                   "power_deficit":  power_deficit}
+                   "power_deficit":  power_deficit
+                   }
 
-    return result_dict
+    return result_dict, WT_power_available
 
 
 ## ------------------------------------------------------------------------------------------------------------------ ##
@@ -263,11 +267,11 @@ def read_wind_data(filename):
 
     # Load wind data file
     if filename == "ALTAWIND":
-        mat_data = loadmat(files('hes_off.core.data_files').joinpath("Alta_wind2.mat"))
+        mat_data = loadmat(files('hes_off.core.data_files').joinpath("Alta_wind_sleipner_comp.mat"))
     elif filename == "SLEIPNERWIND":
         mat_data = loadmat(files('hes_off.core.data_files').joinpath("sleipnerwind.mat"))
     else:
-        mat_data = loadmat
+        mat_data = loadmat(filename)
     # Store wind data into a dictionary
     wind_data = {"speed": mat_data["wind"][0][0][0].squeeze(),
                  "time":  mat_data["wind"][0][0][1].squeeze(),
@@ -390,6 +394,13 @@ def compute_FC_hydrogen_consumption(model, efficiency_coefficients, rated_power,
 ## Gas turbine functions
 ## ------------------------------------------------------------------------------------------------------------------ ##
 
+
+TITAN130_unit_power = 13.083e6
+TITAN130_unit_heat  = 14.3e6
+TITAN130_wear_limit = 0.50
+TITAN130_data_efficiency = np.array(((0.51, 0.70, 0.75, 0.80, 0.90, 1),
+                                     (0.25596, 0.29597, 0.30596, 0.31567, 0.3291, 0.3351)))
+
 # Obtained from the LM2500+G4 map at T_in=15C and p_in=1atm (Excel file)
 LM2500_unit_power = 32.245e6
 LM2500_unit_heat = 22.000e6
@@ -453,7 +464,13 @@ def compute_GT_efficiency(model, number_of_units, power_output):
     power_output = np.atleast_1d(np.asarray(power_output))
 
     # Specify the power curve of each turbine model
-    if model == 'LM2500+G4':
+    if model == "TITAN130":
+        unit_power = TITAN130_unit_power
+        rated_power = unit_power*number_of_units
+        load_data = TITAN130_data_efficiency[0,:]
+        eff_data = TITAN130_data_efficiency[1,:]
+
+    elif model == 'LM2500+G4':
         unit_power = LM2500_unit_power
         rated_power = unit_power*number_of_units
         load_data = LM2500_data_efficiency[0,:]
@@ -502,16 +519,19 @@ def compute_GT_power_from_heat(model, number_of_units, heat_output):
         load_data = LM6000_data_heat[0,:]
         heat_data = LM6000_data_heat[1,:]*number_of_units
 
+    elif model == 'TITAN130':
+        unit_power = TITAN130_unit_power
+        rated_power = unit_power*number_of_units
+        power_output = np.array(((rated_power*TITAN130_wear_limit),(0)))
     else:
-        raise Exception("Invalid gas turbine model\nValid options: 'LM2500+G4', 'LM6000-PF'")
+        raise Exception("Invalid gas turbine model\nValid options: 'LM2500+G4', 'LM6000-PF', TITAN130")
 
-    # Check power output bounds
-    if np.any(heat_output < 0.0) or np.any(heat_output > rated_heat):
-        raise Exception("The heat output is outside the range of operation")
-
-    # Compute the gas turbine power output
-    power_output = np.interp(heat_output, heat_data, load_data)*rated_power
-
+    if model != 'TITAN130':
+        # Check power output bounds
+        if np.any(heat_output < 0.0) or np.any(heat_output > rated_heat):
+            raise Exception("The heat output is outside the range of operation")
+        # Compute the gas turbine power output
+        power_output = np.interp(heat_output, heat_data, load_data) * rated_power
     return power_output
 
 
@@ -521,6 +541,8 @@ def compute_GT_maximum_power(model, number_of_units):
         return LM2500_unit_power*number_of_units
     elif model == 'LM6000-PF':
         return LM6000_unit_power*number_of_units
+    elif model == 'TITAN130':
+        return TITAN130_unit_power*number_of_units
     else:
         raise Exception("Invalid gas turbine model\nValid options: 'LM2500+G4', 'LM6000-PF'")
 

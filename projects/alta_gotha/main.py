@@ -17,6 +17,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 import hes_off.core as hes_off_core
 
 
@@ -39,26 +40,33 @@ import hes_off.core as hes_off_core
 # EdwardGrieg.plot_hydrogen_balance()
 
 IN = hes_off_core.read_configuration_file("alta_gotha.cfg")
-EdwardGrieg = hes_off_core.IntegratedModel(IN)
+AltaGotha = hes_off_core.IntegratedModel(IN)
 with hes_off_core.Timer():
-    EdwardGrieg.evaluate_process_model()
+    AltaGotha.evaluate_process_model()
 
 with hes_off_core.Timer():
-    EdwardGrieg.evaluate_process_model()
-
+    AltaGotha.evaluate_process_model()
 
 
 # print("Lifetime CO2 emissions {:0.2f} Mton".format(EdwardGrieg.CO2_emissions / 1e9))
-print(EdwardGrieg.CO2_emissions/1e9)
+print(AltaGotha.CO2_emissions/1e9)
+
+power_output = np.array(((5),(4)))
+print(power_output)
 
 
-a =EdwardGrieg.plot_hydrogen_level()
-EdwardGrieg.plot_hydrogen_balance()
-EdwardGrieg.plot_power_balance()
-EdwardGrieg.plot_power_deficit()
-EdwardGrieg.plot_carbon_dioxide_emissions()
+a =AltaGotha.plot_hydrogen_level()
+AltaGotha.plot_hydrogen_balance()
+AltaGotha.plot_power_balance()
+AltaGotha.plot_power_deficit()
+AltaGotha.plot_carbon_dioxide_emissions()
 # a.savefig("test.png")
 plt.show()
+
+AltaGotha.print_wt_power_avaliable()
+print(AltaGotha.WIND_DATA["year"])
+plt.show()
+
 
 
 
@@ -134,4 +142,3 @@ plt.show()
 # #     #                                FC_MODEL, FC_RATED_POWER, FC_EFFICIENCY,
 # #     #                                H2_CAPACITY, H2_INITIAL_FRACTION, H2_RECHARGE_THRESHOLD, H2_COFIRE_THRESHOLD,
 # #     #                                wind_speed)
-# #

@@ -117,7 +117,7 @@ class HesOffForm(flask_wtf.FlaskForm):
         render_kw={"data-bs-toggle": "tooltip",
                    "data-bs-placement": "right",
                    "title": "Specify the model of the gas turbines"},
-        choices=[("", ""), ("LM2500+G4", "LM2500+G4 (32 MW)"), ("LM6000-PF", "LM6000-PF (42 MW)")],
+        choices=[("", ""), ("TITAN130", "Solar Titan 130 (13.1 MW)"), ("LM2500+G4", "LM2500+G4 (32 MW)"), ("LM6000-PF", "LM6000-PF (42 MW)")],
         validators=[wtf.validators.InputRequired()])
 
     GT_UNITS = wtf.DecimalField(
