@@ -52,7 +52,7 @@ with hes_off_core.Timer():
 print(AltaGotha.CO2_emissions/1e9)
 
 power_output = np.array(((5),(4)))
-print(power_output)
+#print(power_output)
 
 
 a =AltaGotha.plot_hydrogen_level()
@@ -63,9 +63,11 @@ AltaGotha.plot_carbon_dioxide_emissions()
 # a.savefig("test.png")
 plt.show()
 
-AltaGotha.print_wt_power_avaliable()
+AltaGotha.plot_wt_power_available()
 print(AltaGotha.WIND_DATA["year"])
 plt.show()
+
+print(len(AltaGotha.WT_energy))
 
 
 

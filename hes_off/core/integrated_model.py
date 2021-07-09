@@ -149,7 +149,7 @@ class IntegratedModel:
     def evaluate_process_model(self):
 
         # Evaluate the process model
-        self.process_output, self.WT_power_available = evaluate_process_model(self.HEAT_DEMAND, self.POWER_DEMAND,
+        self.process_output = evaluate_process_model(self.HEAT_DEMAND, self.POWER_DEMAND,
                                                      self.GT_MODEL, self.GT_UNITS, self.GT_MAX_H2,
                                                      self.WT_MODEL, self.WT_RATED_POWER,
                                                      self.WT_REF_HEIGHT, self.WT_HUB_HEIGHT,
@@ -170,6 +170,8 @@ class IntegratedModel:
         self.NG_utilized = self.create_entry("NG_utilized")
         self.CO2_emissions = self.create_entry("CO2_emissions")
         self.energy_deficit = self.create_entry("power_deficit")
+        self.WT_energy_loss = self.create_entry("WT_energy_loss")
+        self.WT_energy_available = self.create_entry("WT_energy_available")
 
 
     def create_entry(self, name):
@@ -430,8 +432,37 @@ class IntegratedModel:
         return fig
 
 
+
+    def plot_wt_power_available(self):
+        """ Plot available over time """
+        fig = Figure(figsize=(6.0, 6.5))
+        fig.suptitle('Available wind power over a year (MW)', fontsize=fontsize+1, fontweight='normal', color='k')
+        axes = fig.subplots(len(self.stage_labels))
+        for index, ax in enumerate(axes):
+            x, y = self.process_output["times"][index, :] / 24, self.process_output["WT_energy_available"][index, :] /1e6
+            for t in ax.xaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
+            for t in ax.yaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
+            ax.plot([0.0], [0.0], linestyle="", marker="", label="Period " + str(index + 1))
+            ax.plot(x[::70], y[::70], linewidth=0.75, linestyle='-', color='k', label="", marker="")
+            # ax.set_ylabel('Power (MW)', fontsize=fontsize, color='k', labelpad=fontsize)
+            ax.set_ylabel(self.stage_labels[index], fontsize=fontsize, color='k', labelpad=fontsize)
+            if index + 1 == len(self.stage_labels):
+                ax.set_xlabel('Time (days)', fontsize=fontsize, color='k', labelpad=fontsize)
+            # ax.legend(ncol=1, loc='lower right', fontsize=fontsize-1, edgecolor='k', framealpha=1.0, handlelength=0.0)
+            dy = np.max(y)
+            dy = np.maximum(dy, 1.00)
+            ax.set_ylim([-dy/5, np.max(y)+dy/5])
+        fig.tight_layout()
+        return fig
+
+
+"""
+
     def print_wt_power_avaliable(self):
-        """Plots and prints wind power statistics"""
+
+        # Plots an prints wind power statistics
+
+        fig, ax = plt.subplots(figsize=(6, 4))
 
         # Makes array with datetime objects for plotting
         start = datetime.datetime(year=int(self.WIND_DATA["year"]),month=1,day=1,hour=0,minute=0,second=0 )
@@ -439,15 +470,21 @@ class IntegratedModel:
         delta = datetime.timedelta(hours=1)
         datetimes = mdates.drange(start,end, delta)
 
-        # Plots generated power from wind turbines for a year
-        fig, ax = plt.subplots(figsize=(15,10))
-        ax.xaxis.set_major_locator(mdates.MonthLocator())
+
+
+
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m.%Y'))
-        [label.set_visible(False) for label in ax.get_xticklabels()[1::2]]
-        ax.set_xlabel("Date (dd.mm.yyyy)", fontsize= 14)
-        ax.set_ylabel("Power (MW)", fontsize = 14)
-        ax.set_title(self.WIND_FILENAME, fontsize = 18, fontweight="bold")
-        ax.plot(datetimes[::70], self.WT_power_available[::70]/10**6, marker = 'o')
+
+        for t in ax.xaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
+        for t in ax.yaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
+
+        ax.set_xlabel("Time (days)", fontsize=fontsize, color='k', labelpad=fontsize)
+        ax.set_ylabel("Power (MW)", fontsize = fontsize,color='k', labelpad=fontsize)
+        ax.plot(datetimes[::70], self.WT_power_available[::70]/10**6, linewidth=0.75, linestyle='-', color='k',
+                marker=' ', markersize=4.5, markeredgewidth=1.25, markeredgecolor='k', markerfacecolor='w', label=None)
+
+        fig.tight_layout()
 
         # Calculates statistics for wind power
         sum_power = 0
@@ -468,9 +505,11 @@ class IntegratedModel:
         print("Average Wind Speed      - ", sum_speed/len(self.WIND_SPEED))
         print("Downtime                - ", sum_downtime/len(self.WT_power_available) * 100)
         print("Maximum power           - ", sum_max/len(self.WT_power_available)*100)
-        print("Total energy consumtion - ", sum_power/10**6)
+        print("Total energy produced - ", sum_power/10**6)
 
+        return fig
 
+"""
 
 
 

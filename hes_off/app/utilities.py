@@ -80,6 +80,7 @@ def initialize_plot_dict():
     plot_dict["CO2_EMISSIONS"] = ["CO<sub>2</sub>&nbsp;emissions graph", ""]
     plot_dict["H2_LEVEL"]      = ["Hydrogen level graph", ""]
     plot_dict["POWER_DEFICIT"] = ["Power deficit graph", ""]
+    plot_dict["AVAILABLE_WIND_POWER"] = ["Available wind power", ""]
     # plot_dict["WIND_SPEED"]    = ["Wind speed graph", ""]
     # plot_dict["POWER_BALANCE"]    = ["Power balance graph", ""]
     return plot_dict
@@ -91,6 +92,7 @@ def create_plot_dict(EnergySystem):
     plot_dict["CO2_EMISSIONS"][-1] = EnergySystem.plot_carbon_dioxide_emissions()
     plot_dict["H2_LEVEL"][-1]      = EnergySystem.plot_hydrogen_level()
     plot_dict["POWER_DEFICIT"][-1] = EnergySystem.plot_power_deficit()
+    plot_dict["AVAILABLE_WIND_POWER"][-1] = EnergySystem.plot_wt_power_available()
     # plot_dict["WIND_SPEED"][-1]    = EnergySystem.plot_wind_timeseries()
     # plot_dict["POWER_BALANCE"][-1]    = EnergySystem.plot_power_balance()
     plot_dict = {key:[label,convert_fig_to_svg(value)] for key, (label, value) in plot_dict.items()}
@@ -106,9 +108,11 @@ def initialize_data_dict():
     data_dict["CO2_emissions"] = ["CO<sub>2</sub>&nbsp;emissions (kton)", "Accumulated carbon dioxide emissions", 4*[""]]
     data_dict["GT_energy"] = ["GT energy  (GWe&#183h)", "Accumulated gas turbine electricity generation", 4 * [""]]
     data_dict["WT_energy"] = ["WT energy (GWe&#183h)", "Accumulated wind farm electricity generation", 4 * [""]]
+    data_dict["WT_energy_loss"] = ["WT energy loss (GWe&#183h)", "Wind energy that are not utilized", 4*[""]]
     data_dict["FC_energy"] = ["FC energy (GWe&#183h)", "Accumulated fuel cell electricity generation", 4 * [""]]
     data_dict["EL_energy"] = ["EL energy (GWe&#183h)", "Accumulated electrolyzer electricity consumption", 4 * [""]]
     data_dict["energy_deficit"] = ["Energy deficit (GWe&#183h)", "Accumulated energy deficit", 4*[""]]
+
     return data_dict
 
 
@@ -120,7 +124,10 @@ def create_data_dict(EnergySystem):
     data_dict["CO2_emissions"][-1]  = ["{:0.2f}".format(item/1e6) for item in EnergySystem.CO2_emissions] # Convert kg to kton
     data_dict["GT_energy"][-1]      = ["{:0.2f}".format(item/1e9) for item in EnergySystem.GT_energy]
     data_dict["WT_energy"][-1]      = ["{:0.2f}".format(item/1e9) for item in EnergySystem.WT_energy]
+    data_dict["WT_energy_loss"][-1] = ["{:0.2f}".format(item/1e9) for item in EnergySystem.WT_energy_loss]
     data_dict["FC_energy"][-1]      = ["{:0.2f}".format(item/1e9) for item in EnergySystem.FC_energy]
     data_dict["EL_energy"][-1]      = ["{:0.2f}".format(item/1e9) for item in EnergySystem.EL_energy]
     data_dict["energy_deficit"][-1] = ["{:0.2f}".format(max(0.0, item/1e9)) for item in EnergySystem.energy_deficit]
+
+
     return data_dict
