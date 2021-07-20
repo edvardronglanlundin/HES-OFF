@@ -434,7 +434,7 @@ class IntegratedModel:
 
 
     def plot_wt_power_available(self):
-        """ Plot available over time """
+        """ Plot available wind power over time """
         fig = Figure(figsize=(6.0, 6.5))
         fig.suptitle('Available wind power over a year (MW)', fontsize=fontsize+1, fontweight='normal', color='k')
         axes = fig.subplots(len(self.stage_labels))
@@ -456,60 +456,8 @@ class IntegratedModel:
         return fig
 
 
-"""
-
-    def print_wt_power_avaliable(self):
-
-        # Plots an prints wind power statistics
-
-        fig, ax = plt.subplots(figsize=(6, 4))
-
-        # Makes array with datetime objects for plotting
-        start = datetime.datetime(year=int(self.WIND_DATA["year"]),month=1,day=1,hour=0,minute=0,second=0 )
-        end = datetime.datetime(year=int(self.WIND_DATA["year"])+1, month=1, day=1,hour=0, minute=0, second=0)
-        delta = datetime.timedelta(hours=1)
-        datetimes = mdates.drange(start,end, delta)
 
 
-
-
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m.%Y'))
-
-        for t in ax.xaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
-        for t in ax.yaxis.get_major_ticks(): t.label1.set_fontsize(fontsize)
-
-        ax.set_xlabel("Time (days)", fontsize=fontsize, color='k', labelpad=fontsize)
-        ax.set_ylabel("Power (MW)", fontsize = fontsize,color='k', labelpad=fontsize)
-        ax.plot(datetimes[::70], self.WT_power_available[::70]/10**6, linewidth=0.75, linestyle='-', color='k',
-                marker=' ', markersize=4.5, markeredgewidth=1.25, markeredgecolor='k', markerfacecolor='w', label=None)
-
-        fig.tight_layout()
-
-        # Calculates statistics for wind power
-        sum_power = 0
-        sum_speed = 0
-        sum_downtime = 0
-        sum_max = 0
-        for power in self.WT_power_available:
-            sum_power += power
-            if power == 0:
-                sum_downtime += 1
-            if power == self.WT_RATED_POWER:
-                sum_max += 1
-        for speed in self.WIND_SPEED:
-            sum_speed += speed
-
-        # Prints statistiscs for wind power
-        print("\nAverage Wind Power    - ", (sum_power/len(self.WT_power_available))/10**6)
-        print("Average Wind Speed      - ", sum_speed/len(self.WIND_SPEED))
-        print("Downtime                - ", sum_downtime/len(self.WT_power_available) * 100)
-        print("Maximum power           - ", sum_max/len(self.WT_power_available)*100)
-        print("Total energy produced - ", sum_power/10**6)
-
-        return fig
-
-"""
 
 
 

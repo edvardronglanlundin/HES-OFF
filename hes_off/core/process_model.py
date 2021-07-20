@@ -67,7 +67,6 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
 
         # Compute the minimum GT load required to satisfy the heat demand
         GT_power_min = compute_GT_power_from_heat(model=GT_MODEL, number_of_units=GT_UNITS, heat_output=heat_demand)[0]
-        print(GT_power_min)
 
         # Compute the maximum GT load of the current GT model
         GT_power_max = compute_GT_maximum_power(model=GT_MODEL, number_of_units=GT_UNITS)
@@ -102,7 +101,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                 if H2_level[p,t] < H2_RECHARGE_THRESHOLD * H2_CAPACITY:
                     flag_current = 3
                     WT_power_current = WT_power_available[t]
-                    EL_power_current = 0.0 #np.minimum(EL_RATED_POWER, GT_power_max + WT_power_current - power_demand)
+                    EL_power_current = np.minimum(EL_RATED_POWER, GT_power_max + WT_power_current - power_demand)
                     GT_power_current = np.minimum(GT_power_max, power_demand + EL_power_current - WT_power_current)
                     FC_power_current = 0.0
 
@@ -110,7 +109,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                 else:
                     flag_current = 4
                     WT_power_current = WT_power_available[t]
-                    FC_power_current = np.minimum(FC_RATED_POWER, power_demand - WT_power_current - GT_power_min) #0.0
+                    FC_power_current = 0.0
                     EL_power_current = 0.0
                     GT_power_current = power_demand - WT_power_current - FC_power_current
 
@@ -223,6 +222,7 @@ HYWIND_data_power = np.asarray(((
                     (0.0000, 0.0000, 0.0000, 0.0000, 0.0290, 0.0725, 0.1304, 0.2101, 0.3261, 0.4638,
                     0.6232, 0.7754, 0.8913, 0.9565, 0.9855, 1.0000, 1.0000, 1.0000, 0.0000, 0.0000)))
 
+# VESTAS turbine data collected from https://en.wind-turbine-models.com/turbines/318-vestas-v164-8.0
 VESTAS_unit_power = 8e6
 VESTAS_data_power = np.asarray(((
                     0.00, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 9.00, 10.00,
@@ -295,9 +295,9 @@ def read_wind_data(filename):
     else:
         mat_data = loadmat(filename)
     # Store wind data into a dictionary
-    wind_data = {"speed": mat_data["wind"][0][0][0].squeeze(),
-                 "time":  mat_data["wind"][0][0][1].squeeze(),
-                 "year":  mat_data["wind"][0][0][2].squeeze()}
+    wind_data = {"speed": mat_data["wind"][0][2][0].squeeze(),
+                 "time":  mat_data["wind"][0][2][1].squeeze(),
+                 "year":  mat_data["wind"][0][2][2].squeeze()}
 
     if filename != "ALTAWIND":
         # Convert from days to hours
