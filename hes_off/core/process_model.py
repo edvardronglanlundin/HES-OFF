@@ -423,8 +423,8 @@ TITAN130_data_efficiency = np.array(((0.51, 0.70, 0.75, 0.80, 0.90, 1),
                                      (0.25596, 0.29597, 0.30596, 0.31567, 0.3291, 0.3351)))
 
 """
-#This code is for when I used the gas turbine efficiencies between 0% and 100% together with the WHRU efficiencies
-#from the Edward Grieg analysis.
+# This code is for when I used the gas turbine efficiencies between 0% and 100% together with the WHRU efficiencies
+# from the Edward Grieg analysis.
 
 # From Solar data sheet:
 TITAN130_data_efficiency = np.array(((0.20, 0.40, 0.60, 0.80, 1),

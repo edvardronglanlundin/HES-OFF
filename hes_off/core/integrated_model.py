@@ -5,8 +5,7 @@ from importlib_resources import files
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 from matplotlib.figure import  Figure
-import matplotlib.dates as mdates
-import datetime as datetime
+
 
 from .utilities import *
 from .process_model import *
