@@ -64,10 +64,8 @@ AltaGotha.plot_carbon_dioxide_emissions()
 plt.show()
 
 AltaGotha.plot_wt_power_available()
-print(AltaGotha.WIND_DATA["year"])
 plt.show()
 
-print(len(AltaGotha.WT_energy))
 
 
 

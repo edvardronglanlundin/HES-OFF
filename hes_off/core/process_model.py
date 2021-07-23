@@ -3,7 +3,7 @@ import numpy as np
 import numba as nb
 from scipy.io import loadmat
 from importlib_resources import files
-import pandas as pd
+
 
 
 # Compile time constants
@@ -78,7 +78,6 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
 
             # Use a run-out-of-steam strategy to supply the power demand
             if GT_power_min + WT_power_available[t] >= power_demand:
-
                 # Case 1: Use GT_min and WT to satisfy the power demand (use EL to recharge H2)
                 if H2_level[p,t] < H2_CAPACITY:
                     flag_current = 1
@@ -101,7 +100,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                 if H2_level[p,t] < H2_RECHARGE_THRESHOLD * H2_CAPACITY:
                     flag_current = 3
                     WT_power_current = WT_power_available[t]
-                    EL_power_current = np.minimum(EL_RATED_POWER, GT_power_max + WT_power_current - power_demand)
+                    EL_power_current = 0 #np.minimum(EL_RATED_POWER, GT_power_max + WT_power_current - power_demand)
                     GT_power_current = np.minimum(GT_power_max, power_demand + EL_power_current - WT_power_current)
                     FC_power_current = 0.0
 
@@ -109,7 +108,7 @@ def evaluate_process_model(HEAT_DEMAND, POWER_DEMAND,
                 else:
                     flag_current = 4
                     WT_power_current = WT_power_available[t]
-                    FC_power_current = 0.0
+                    FC_power_current = np.minimum(FC_RATED_POWER, power_demand - WT_power_current - GT_power_min)
                     EL_power_current = 0.0
                     GT_power_current = power_demand - WT_power_current - FC_power_current
 
@@ -419,9 +418,26 @@ def compute_FC_hydrogen_consumption(model, efficiency_coefficients, rated_power,
 # From data sheet and from performance sheet for the gas turbine and WHRU
 TITAN130_unit_power = 13.083e6
 TITAN130_unit_heat  = 14.3e6
-TITAN130_wear_limit = 0.50                # Obtained from discussion with gas turbine expert in combination with datasheet
+TITAN130_limit = 0.50                # Obtained from discussion with gas turbine expert in combination with datasheet
 TITAN130_data_efficiency = np.array(((0.51, 0.70, 0.75, 0.80, 0.90, 1),
                                      (0.25596, 0.29597, 0.30596, 0.31567, 0.3291, 0.3351)))
+
+"""
+#This code is for when I used the gas turbine efficiencies between 0% and 100% together with the WHRU efficiencies
+#from the Edward Grieg analysis.
+
+# From Solar data sheet:
+TITAN130_data_efficiency = np.array(((0.20, 0.40, 0.60, 0.80, 1),
+                                     (0.15807, 0.21924, 0.26875, 0.3141, 0.33749)))
+
+# Used the same efficicency as the WHRU for the Edward Grieg study:
+TITAN130_data_heat = np.asarray(((
+                            0.000, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550,
+                            0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 1.000),
+                            (0.0, 7.15, 7.8, 9.1, 9.75, 10.4, 11.05, 11.375, 11.7, 12.35,
+                             12.675, 13.0, 13.13, 13.26, 13.39, 13.52, 13.65, 14.3)))
+
+"""
 
 # Obtained from the LM2500+G4 map at T_in=15C and p_in=1atm (Excel file)
 LM2500_unit_power = 32.245e6
@@ -547,7 +563,17 @@ def compute_GT_power_from_heat(model, number_of_units, heat_output):
         unit_power = TITAN130_unit_power
         rated_power = unit_power*number_of_units
         # Returns the turbine minimum power output
-        return np.array([rated_power * TITAN130_wear_limit])
+        return np.array([rated_power * TITAN130_limit])
+        """
+        #This code is for when I used the gas turbine efficiencies between 0% and 100% together with the WHRU efficiencies
+        #from the Edward Grieg analysis.
+        unit_power = TITAN130_unit_power
+        rated_power = unit_power * number_of_units
+        unit_heat = TITAN130_unit_heat
+        rated_heat = unit_heat * number_of_units
+        load_data = TITAN130_data_heat[0, :]
+        heat_data = TITAN130_data_heat[1, :] * number_of_units * 1e6
+        """
 
     else:
         raise Exception("Invalid gas turbine model\nValid options: 'LM2500+G4', 'LM6000-PF', TITAN130")
